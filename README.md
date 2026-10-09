@@ -71,6 +71,8 @@ The staging tables intentionally store imported values as text in several places
 
 ## Current scope and future work
 
-Current scope is MySQL-based analysis and documented business findings. Power BI and in-database SQL Server Python/ML runtime setup are intentionally out of scope for this phase. The next phase is to validate the findings, improve reproducibility, and define a defensible ML use case.
+The current scope is MySQL-based sales analysis and documented business findings. Power BI and in-database SQL Server Python/ML runtime setup are intentionally out of scope for this phase.
+
+**Possible future extension — deal win/loss prediction:** If the dataset and available features support a reliable model, a future phase could explore building a machine learning classifier to estimate whether an opportunity is likely to be won or lost. This would involve defining the prediction point and target, selecting only information available at that point to avoid data leakage, preparing features, comparing baseline models, and evaluating performance with appropriate metrics such as precision, recall, F1-score, and ROC-AUC. The model would be an exploratory extension, not a completed feature or a guaranteed outcome.
 
 See [the business report](docs/business_analysis_report.md), [data-quality notes](docs/data_quality_and_assumptions.md), and [roadmap](docs/roadmap.md).
