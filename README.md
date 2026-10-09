@@ -19,8 +19,7 @@ b2b-sales-analytics/
 │   └── 01_b2b_sales_analytics.sql   # SQL setup, validation, and analysis
 ├── docs/
 │   ├── business_analysis_report.md
-│   ├── data_quality_and_assumptions.md
-│   └── roadmap.md
+│   └── data_quality_and_assumptions.md
 ├── outputs/                         # Reserved for exported results
 ├── .gitignore
 └── README.md
@@ -75,4 +74,4 @@ The current scope is MySQL-based sales analysis and documented business findings
 
 **Possible future extension — deal win/loss prediction:** If the dataset and available features support a reliable model, a future phase could explore building a machine learning classifier to estimate whether an opportunity is likely to be won or lost. This would involve defining the prediction point and target, selecting only information available at that point to avoid data leakage, preparing features, comparing baseline models, and evaluating performance with appropriate metrics such as precision, recall, F1-score, and ROC-AUC. The model would be an exploratory extension, not a completed feature or a guaranteed outcome.
 
-See [the business report](docs/business_analysis_report.md), [data-quality notes](docs/data_quality_and_assumptions.md), and [roadmap](docs/roadmap.md).
+See [the business report](docs/business_analysis_report.md) and [data-quality notes](docs/data_quality_and_assumptions.md).
