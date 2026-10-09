@@ -1,77 +1,112 @@
 # B2B Sales Analytics
 
-A portfolio project using **MySQL and SQL** to analyze a synthetic B2B CRM sales pipeline. The project demonstrates data staging, data-quality checks, joins, aggregation, CTEs, business metric definitions, and evidence-based sales analysis.
+A practical analytics project built around a synthetic B2B CRM sales pipeline. It starts with SQL-based business analysis and extends into a documented machine-learning experiment to assess whether the available CRM fields can predict completed deal outcomes.
 
-## Business questions
+## Project overview
 
-1. **Sales team performance** — compare managers and regional offices using won deals, won revenue, lost deals, win rate, average won deal size, and net difference from suggested retail prices.
-2. **Sales agent performance** — compare opportunity volume, won/lost/open pipeline, revenue, win rate, average won deal size, and a simple performance category.
-3. **Quarterly trends** — summarize won deals and won revenue by quarter.
-4. **Product win rates** — compare win rates across products using decided opportunities only.
+The project answers four business questions:
+
+1. How do sales teams perform against one another?
+2. Are there meaningful differences in sales-agent performance?
+3. How does sales performance change by quarter?
+4. Do products have different win rates?
+
+The SQL analysis is the core business-analysis deliverable. The Python extension tests a separate question: **do the available account, product and sales-assignment fields provide useful signal for distinguishing Won from Lost opportunities?**
+
+## Key finding
+
+The first model comparison did **not** establish a useful win/loss predictor. The majority-class baseline achieved 63.14% test accuracy, while the tested models had ROC-AUC scores close to 0.50 or below. The project therefore does not recommend deploying a classifier from these features.
+
+That is an important result, not a claim of model success: it shows why a baseline, held-out evaluation and an explicit decision not to select a model matter. Better pre-outcome CRM activity data and a clearly defined prediction point are the next steps.
 
 ## Repository structure
 
 ```text
 b2b-sales-analytics/
-├── data/
-│   └── raw/                         # Original CSV files; preserve as source data
+├── data/raw/                  # Source CSVs; keep unchanged
+├── data/processed/            # Created by notebooks; not source data
 ├── sql/
-│   └── 01_b2b_sales_analytics.sql   # SQL setup, validation, and analysis
+│   └── 01_b2b_sales_analytics.sql
+├── notebooks/
+│   ├── 01_data_understanding_and_eda.ipynb
+│   ├── 02_data_preparation_and_feature_engineering.ipynb
+│   └── 03_model_training_and_evaluation.ipynb
 ├── docs/
 │   ├── business_analysis_report.md
-│   └── data_quality_and_assumptions.md
-├── outputs/                         #exported results
-├── .gitignore
+│   ├── data_quality_and_assumptions.md
+│   ├── ml_methodology.md
+│   └── ml_model_card.md
+├── outputs/                   # SQL result exports
+├── reports/                   # Generated evaluation summaries
+├── requirements.txt
 └── README.md
 ```
 
-## Dataset
+## Data
 
-The source is Maven Analytics' **CRM Sales Opportunities** dataset, a synthetic CRM dataset designed for sales analysis. The five CSVs in `data/raw/` are:
+The project uses Maven Analytics' [CRM Sales Opportunities dataset](https://mavenanalytics.io/data-playground/crm-sales-opportunities), a synthetic dataset intended for analytics practice. Expected source files in `data/raw/` are:
 
+- `sales_pipeline.csv`
 - `accounts.csv`
 - `products.csv`
 - `sales_teams.csv`
-- `sales_pipeline.csv`
 - `data_dictionary.csv`
 
-Source: [Maven Analytics Data Playground — CRM Sales Opportunities](https://mavenanalytics.io/data-playground/crm-sales-opportunities). A public mirror of the CSV files is available at [Carlscamt/CRM-Sales-Opportunities](https://github.com/Carlscamt/CRM-Sales-Opportunities).
+The raw files are preserved. In particular, the product spelling mismatch `GTXPro` versus `GTX Pro` is handled with a derived join key rather than by modifying source values.
 
-## How to run
+## Run the SQL analysis
 
 1. Install MySQL Server and MySQL Workbench.
-2. Clone or download this repository.
-3. Open `sql/01_b2b_sales_analytics.sql` in MySQL Workbench.
-4. Run the database setup and create the staging tables.
-5. Import the CSV files into the matching `stg_*` tables, using the import settings and column order described in the SQL comments.
-6. Run the data-quality checks before interpreting the analysis.
-7. Run the four business-question sections and compare the results with `docs/business_analysis_report.md`.
+2. Open `sql/01_b2b_sales_analytics.sql`.
+3. Follow the script comments to create staging tables and import the CSVs.
+4. Run the data-quality checks before interpreting the analysis.
+5. Run the four business-question sections and compare results with `docs/business_analysis_report.md`.
 
-The staging tables intentionally store imported values as text in several places so that type conversion and data-quality handling are explicit in SQL. Do not update raw staging values to silently fix source inconsistencies.
+## Run the Python notebooks
 
-## Metric definitions
+Use Python 3.10 or newer. From the repository root:
 
-- **Won deals:** count of opportunities where `deal_stage = 'Won'`.
-- **Lost deals:** count of opportunities where `deal_stage = 'Lost'`.
-- **Open opportunities:** Prospecting and Engaging opportunities; these are not included in decided-deal win-rate denominators.
-- **Win rate:** `Won / (Won + Lost) * 100`. Open opportunities are excluded.
-- **Won revenue:** sum of `close_value` for won opportunities.
-- **Average won deal size:** won revenue divided by won deals.
-- **Net price difference:** for won opportunities with a matched product, sum of `close_value - suggested retail price`. This is not profit, margin, or a confirmed discount.
-- **Agent category:** Poor below 60%; Average from 60% through 65% inclusive; Good above 65%.
+```bash
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
 
-## Data handling decisions
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+jupyter lab
+```
 
-- Keep `data/raw/` unchanged as source data.
-- The pipeline uses `GTXPro` while the products table uses `GTX Pro`. Normalize that spelling in analysis joins with a `CASE` expression; do not rewrite the source CSV or staging value.
-- Some opportunities have no account value. Keep these records unless a specific analysis requires a matched account.
-- The product table's `sales_price` is described as a **suggested retail price**. A difference from close value should not be described as profit or a discount without additional evidence.
-- The source data covers 2017; quarterly analysis uses the close date and reports quarters within that year.
+Run the notebooks in order:
 
-## Current scope and future work
+1. **01 — Data understanding and EDA:** validates the source tables, reviews missingness and category distributions, and visualises the target.
+2. **02 — Preparation and feature engineering:** validates joins, builds a Won/Lost target from decided opportunities, and creates a modeling table without outcome leakage.
+3. **03 — Model training and evaluation:** compares a majority-class baseline with several classifiers using training-only cross-validation and a held-out test set.
 
-The current scope is MySQL-based sales analysis and documented business findings. Power BI and in-database SQL Server Python/ML runtime setup are intentionally out of scope for this phase.
+The notebooks search for the CSVs under `data/raw/` and in the current/notebook directory. Run all cells from top to bottom. Generated processed data and reports are outputs, not source files.
 
-**Possible future extension — deal win/loss prediction:** If the dataset and available features support a reliable model, a future phase could explore building a machine learning classifier to estimate whether an opportunity is likely to be won or lost. This would involve defining the prediction point and target, selecting only information available at that point to avoid data leakage, preparing features, comparing baseline models, and evaluating performance with appropriate metrics such as precision, recall, F1-score, and ROC-AUC. The model would be an exploratory extension, not a completed feature or a guaranteed outcome.
+## Modeling choices and guardrails
 
-See [the business report](docs/business_analysis_report.md) and [data-quality notes](docs/data_quality_and_assumptions.md).
+- Only Won and Lost opportunities are labeled; Prospecting and Engaging are not treated as losses.
+- Deal stage, close value, close date, opportunity ID and account name are not model predictors.
+- Preprocessing is fit inside each training fold to reduce leakage.
+- The test partition is reserved for final evaluation, not model selection.
+- Accuracy is reported alongside ROC-AUC, balanced accuracy, class-specific precision/recall and confusion matrices.
+- A model is not recommended merely because it ranks first among weak candidates.
+- This is retrospective classification, not a point-in-time production system. The data does not provide full snapshots of what was known at each stage of a deal.
+
+## Business metric definitions
+
+- **Win rate:** Won / (Won + Lost); open opportunities are excluded.
+- **Won revenue:** sum of `close_value` for Won opportunities.
+- **Net price difference:** sum of `close_value - suggested retail price` for matched Won deals. This is not profit or margin.
+- **Quarterly trends:** grouped by close date within the source period.
+
+## Next step
+
+Collect or engineer reliable features available before the prediction point—such as lead source, sales activities, proposal/demo milestones or competitor information—then repeat the evaluation with a time-aware validation strategy if timestamps support it.
+
+## License and data note
+
+The CRM data is synthetic and is included for educational analysis. Check the original dataset's terms before redistributing data or generated artifacts. No real company performance should be inferred from these records.
