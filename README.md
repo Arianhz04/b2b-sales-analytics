@@ -20,7 +20,7 @@ b2b-sales-analytics/
 ├── docs/
 │   ├── business_analysis_report.md
 │   └── data_quality_and_assumptions.md
-├── outputs/                         # Reserved for exported results
+├── outputs/                         #exported results
 ├── .gitignore
 └── README.md
 ```
